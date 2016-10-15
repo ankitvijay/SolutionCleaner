@@ -7,7 +7,7 @@
     public class Program
     {
         #region [ Private Fields ]
-        private static readonly List<string> FolderList = new List<string> { "bin", "obj", "TestResults" };
+        private static readonly List<string> FolderList = new List<string> { "bin", "obj", "TestResults", "packages" };
 
         private static readonly List<string> FileExtensionList = new List<string>
                                                                      {
