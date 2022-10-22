@@ -1,5 +1,5 @@
 ﻿// Update the folders that need to be deleted
-var folderList = new List<string> { "bin", "obj", "TestResults", "packages" };
+var folderList = new List<string> { "bin", "obj", "node_modules", "TestResults", "packages", ".idea", ".vs"  };
 
 // Update the file extensions that need to be deleted here
 var fileExtensionList = new List<string>
@@ -11,7 +11,8 @@ var fileExtensionList = new List<string>
 };
 
 
-WriteInfo("Enter solution folder. Press enter for current folder.");
+Console.WriteLine("Enter solution folder. Press enter for current folder.");
+
 var solutionFolderPath = Console.ReadLine();
 if (string.IsNullOrEmpty(solutionFolderPath?.Trim()))
 {
@@ -20,35 +21,35 @@ if (string.IsNullOrEmpty(solutionFolderPath?.Trim()))
 
 WriteInfo("Starting operation clean solution...");
 var solutionFolder = new DirectoryInfo(solutionFolderPath);
-CleanSolution(solutionFolder);
+await CleanSolution(solutionFolder);
 WriteInfo("Operation completed");
 Console.ReadKey();
 
 
-void CleanSolution(DirectoryInfo rootFolder)
+async Task CleanSolution(DirectoryInfo rootFolder)
 {
-    foreach (var folder in folderList)
+    await Parallel.ForEachAsync(folderList, async (subFolder, _) =>
     {
-        DeleteFolder(rootFolder, folder);
-    }
+        await DeleteFolder(rootFolder, subFolder);
+    });
 
-    foreach (var file in fileExtensionList)
+    Parallel.ForEach(fileExtensionList, (file, _) =>
     {
         DeleteFileByExtension(rootFolder, file);
-    }
+    });
 
     WriteInfo("Files/Folders deleted successfully....");
 }
 
-void DeleteFolder(DirectoryInfo rootFolder, string folderName)
+async Task DeleteFolder(DirectoryInfo rootFolder, string folderName)
 {
     try
     {
         var subfolders = rootFolder.GetDirectories();
-        foreach (var subFolder in subfolders)
+        await Parallel.ForEachAsync(subfolders, async (subFolder, token) =>
         {
-            DeleteFolder(subFolder, folderName);
-        }
+            await DeleteFolder(subFolder, folderName);
+        });
 
         var isSearchFolder = rootFolder.Name.Equals(folderName, StringComparison.OrdinalIgnoreCase);
         if (!isSearchFolder)
@@ -100,9 +101,9 @@ static void WriteError(string message)
     Write(message, ConsoleColor.Red);
 }
 
-static void Write(string message, ConsoleColor consoleColor = ConsoleColor.White)
+static void Write(string message, ConsoleColor consoleColor = ConsoleColor.White, bool showTime = true)
 {
     Console.ForegroundColor = consoleColor;
-    Console.WriteLine(message);
+    Console.WriteLine(showTime ? $"{DateTime.Now.ToLongTimeString()}: {message}": message);
     Console.ResetColor();
 }
