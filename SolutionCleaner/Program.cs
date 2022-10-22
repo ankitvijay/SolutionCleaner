@@ -1,123 +1,108 @@
-﻿namespace SolutionCleaner
+﻿// Update the folders that need to be deleted
+var folderList = new List<string> { "bin", "obj", "TestResults", "packages" };
+
+// Update the file extensions that need to be deleted here
+var fileExtensionList = new List<string>
 {
-    using System;
-    using System.Collections.Generic;
-    using System.IO;
+    "*.vssscc",
+    "*.ncrunchproject",
+    "*.user",
+    "*.suo"
+};
 
-    public class Program
+
+WriteInfo("Enter solution folder. Press enter for current folder.");
+var solutionFolderPath = Console.ReadLine();
+if (string.IsNullOrEmpty(solutionFolderPath?.Trim()))
+{
+    solutionFolderPath = Directory.GetCurrentDirectory();
+}
+
+WriteInfo("Starting operation clean solution...");
+var solutionFolder = new DirectoryInfo(solutionFolderPath);
+CleanSolution(solutionFolder);
+WriteInfo("Operation completed");
+Console.ReadKey();
+
+
+void CleanSolution(DirectoryInfo rootFolder)
+{
+    foreach (var folder in folderList)
     {
-        #region [ Private Fields ]
-        private static readonly List<string> FolderList = new List<string> { "bin", "obj", "TestResults", "packages" };
-
-        private static readonly List<string> FileExtensionList = new List<string>
-                                                                     {
-                                                                         "*.vssscc",
-                                                                         "*.ncrunchproject",
-                                                                         "*.user",
-                                                                         "*.suo"
-                                                                     };
-        #endregion
-
-        #region [ Private Methods - Main ]
-        private static void Main()
-        {
-            WriteInfo("Enter solution folder. Press enter for current folder.");
-            string solutionFolderPath = Console.ReadLine();
-            if (string.IsNullOrEmpty(solutionFolderPath?.Trim()))
-            {
-                solutionFolderPath = Directory.GetCurrentDirectory();
-            }
-
-            var solutionFolder = new DirectoryInfo(solutionFolderPath);
-            CleanSolution(solutionFolder);
-            WriteInfo("Operation completed");
-            Console.ReadKey();
-        }
-        #endregion
-
-        #region [ Private Methods - Clean & Delete ]
-        private static void CleanSolution(DirectoryInfo rootFolder)
-        {
-            foreach (var folder in FolderList)
-            {
-                DeleteFolder(rootFolder, folder);    
-            }
-
-            foreach (var file in FileExtensionList)
-            {
-                DeleteFileByExtention(rootFolder, file);
-            }
-            
-            WriteInfo("Files/Folders deleted successfully....");
-        }
-
-        private static void DeleteFolder(DirectoryInfo rootFolder, string folderName)
-        {
-            try
-            {
-                var subfolders = rootFolder.GetDirectories();
-                foreach (var subFolder in subfolders)
-                {
-                    DeleteFolder(subFolder, folderName);
-                }
-
-                var isSearchFolder = rootFolder.Name.Equals(folderName, StringComparison.OrdinalIgnoreCase);
-                if (!isSearchFolder)
-                {
-                    return;
-                }
-
-                WriteInfo($"Deleting {rootFolder.Name}");
-                Directory.Delete(rootFolder.FullName, true);
-                WriteSuccess($"Deleted {rootFolder.Name}");
-            }
-            catch
-            {
-                WriteError($"Could not delete: {folderName}");
-            }
-        }
-
-        private static void DeleteFileByExtention(DirectoryInfo rootFolder, string fileExtention)
-        {
-            try
-            {
-                var toDelete = rootFolder.GetFiles(fileExtention, SearchOption.AllDirectories);
-                foreach (var file in toDelete)
-                {
-                    WriteInfo($"Deleting {file.FullName}");
-                    file.Delete();
-                    WriteSuccess($"Deleted {file.FullName}");
-                }
-            }
-            catch (Exception ex)
-            {
-                WriteError(ex.Message);
-            }
-        }
-        #endregion
-
-        #region [ Private Methods - Write ]
-        private static void WriteInfo(string message)
-        {
-            Write(message);
-        }
-
-        private static void WriteSuccess(string message)
-        {
-            Write(message, ConsoleColor.Green);
-        }
-
-        private static void WriteError(string message)
-        {
-            Write(message, ConsoleColor.Red);
-        }
-
-        private static void Write(string message, ConsoleColor consoleColor = ConsoleColor.White)
-        {
-            Console.ForegroundColor = consoleColor;
-            Console.WriteLine(message);
-            Console.ResetColor();
-        }
-        #endregion
+        DeleteFolder(rootFolder, folder);
     }
+
+    foreach (var file in fileExtensionList)
+    {
+        DeleteFileByExtension(rootFolder, file);
+    }
+
+    WriteInfo("Files/Folders deleted successfully....");
+}
+
+void DeleteFolder(DirectoryInfo rootFolder, string folderName)
+{
+    try
+    {
+        var subfolders = rootFolder.GetDirectories();
+        foreach (var subFolder in subfolders)
+        {
+            DeleteFolder(subFolder, folderName);
+        }
+
+        var isSearchFolder = rootFolder.Name.Equals(folderName, StringComparison.OrdinalIgnoreCase);
+        if (!isSearchFolder)
+        {
+            return;
+        }
+
+        WriteInfo($"Deleting {rootFolder.FullName}");
+        Directory.Delete(rootFolder.FullName, true);
+        WriteSuccess($"Deleted {rootFolder.FullName}");
+    }
+    catch
+    {
+        WriteError($"Cannot delete: {folderName}");
+    }
+}
+
+void DeleteFileByExtension(DirectoryInfo rootFolder, string fileExtension)
+{
+    try
+    {
+        var toDelete = rootFolder.GetFiles(fileExtension, SearchOption.AllDirectories);
+        foreach (var file in toDelete)
+        {
+            WriteInfo($"Deleting {file.FullName}");
+            file.Delete();
+            WriteSuccess($"Deleted {file.FullName}");
+        }
+    }
+    catch (Exception ex)
+    {
+        WriteError(ex.Message);
+    }
+}
+
+
+static void WriteInfo(string message)
+{
+    Write(message);
+}
+
+static void WriteSuccess(string message)
+{
+    Write(message, ConsoleColor.Green);
+}
+
+static void WriteError(string message)
+{
+    Write(message, ConsoleColor.Red);
+}
+
+static void Write(string message, ConsoleColor consoleColor = ConsoleColor.White)
+{
+    Console.ForegroundColor = consoleColor;
+    Console.WriteLine(message);
+    Console.ResetColor();
 }
